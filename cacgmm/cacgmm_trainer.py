@@ -1,3 +1,6 @@
+# The functions here are modified from:
+# https://github.com/fgnt/pb_bss/blob/master/pb_bss/distribution/cacgmm.py
+
 from operator import xor
 
 import cupy as cp
@@ -25,7 +28,7 @@ class CACGMMTrainer:
         """
 
         Args:
-            y: Shape (frequency, channel, time) or (F, T, D)
+            y: Shape (frequency, time, channel) or (F, T, D)
             initialization:
                 Affiliations between 0 and 1. Shape (F, K, T)
                 or CACGMM instance

@@ -1,3 +1,6 @@
+# The functions here are modified from:
+# https://github.com/fgnt/pb_bss/blob/master/pb_bss/distribution/complex_angular_central_gaussian.py
+
 import cupy as cp
 
 from cacgmm.cacg import ComplexAngularCentralGaussian

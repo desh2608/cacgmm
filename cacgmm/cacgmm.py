@@ -1,3 +1,6 @@
+# The functions here are modified from:
+# https://github.com/fgnt/pb_bss/blob/master/pb_bss/distribution/cacgmm.py
+
 from dataclasses import dataclass, field
 
 import cupy as cp

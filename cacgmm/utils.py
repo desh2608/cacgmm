@@ -2,26 +2,6 @@ import cupy as cp
 
 
 def _unit_norm(signal, *, axis=-1, eps=1e-4, eps_style="plus", ord=None):
-    """Unit normalization.
-    Args:
-        signal: STFT signal with shape (..., T, D).
-        eps_style: in ['plus', 'max']
-    Returns:
-        Normalized STFT signal with same shape.
-    >>> signal = cp.array([[1, 1], [1e-20, 1e-20], [0, 0]])
-    >>> _unit_norm(signal, eps_style='plus')
-    array([[7.07056785e-01, 7.07056785e-01],
-           [1.00000000e-16, 1.00000000e-16],
-           [0.00000000e+00, 0.00000000e+00]])
-    >>> _unit_norm(signal, eps_style='max')
-    array([[7.07106781e-01, 7.07106781e-01],
-           [1.00000000e-16, 1.00000000e-16],
-           [0.00000000e+00, 0.00000000e+00]])
-    >>> _unit_norm(signal, eps_style='where')  # eps has no effect
-    array([[0.70710678, 0.70710678],
-           [0.70710678, 0.70710678],
-           [0.        , 0.        ]])
-    """
     norm = cp.linalg.norm(signal, ord=ord, axis=axis, keepdims=True)
     if eps_style == "plus":
         norm = norm + eps
@@ -35,15 +15,6 @@ def _unit_norm(signal, *, axis=-1, eps=1e-4, eps_style="plus", ord=None):
 
 
 def force_hermitian(matrix):
-    """
-    >>> A = cp.array([[1+2j, 3+5j], [7+11j, 13+17j]])
-    >>> force_hermitian(A)
-    array([[ 1.+0.j,  5.-3.j],
-           [ 5.+3.j, 13.+0.j]])
-    >>> force_hermitian(force_hermitian(A))
-    array([[ 1.+0.j,  5.-3.j],
-           [ 5.+3.j, 13.+0.j]])
-    """
     return (matrix + cp.swapaxes(matrix.conj(), -1, -2)) / 2
 
 
@@ -52,40 +23,6 @@ def estimate_mixture_weight(
     saliency=None,
     weight_constant_axis=-1,
 ):
-    """
-    Estimates the mixture weight of a mixture model.
-    The simplest version (without saliency and prior):
-        return cp.mean(affiliation, axis=weight_constant_axis, keepdims=True)
-    Args:
-        affiliation: Shape: (..., K, T)
-        saliency: Shape: (..., K, T)
-        weight_constant_axis: int
-    Returns:
-        mixture weight with the same shape as affiliation, except for the
-        weight_constant_axis that is a singleton:
-            e.g. for weight_constant_axis == -1: (..., K, 1)
-        When the weight_constant_axis is -2 or the positive counterpart,
-        then the returned shape is always (K, 1) and the value if 1/K.
-    >>> affiliation = [[0.4, 1, 0.4], [0.6, 0, 0.6]]
-    >>> estimate_mixture_weight(affiliation)
-    array([[0.6],
-           [0.4]])
-    >>> estimate_mixture_weight(affiliation, weight_constant_axis=-2)
-    array([[0.5],
-           [0.5]])
-    >>> estimate_mixture_weight([affiliation, affiliation])
-    array([[[0.6],
-            [0.4]],
-    <BLANKLINE>
-           [[0.6],
-            [0.4]]])
-    >>> estimate_mixture_weight([affiliation, affiliation], weight_constant_axis=-2)
-    array([[0.5],
-           [0.5]])
-    >>> estimate_mixture_weight([affiliation, affiliation], weight_constant_axis=-3)
-    array([[[0.4, 1. , 0.4],
-            [0.6, 0. , 0.6]]])
-    """
     affiliation = cp.asarray(affiliation)
 
     if (
@@ -118,14 +55,6 @@ def log_pdf_to_affiliation(
     source_activity_mask=None,
     affiliation_eps=0.0,
 ):
-    """
-    Args:
-        weight: Needs to be broadcast compatible (i.e. unsqueezed).
-        log_pdf: Shape (..., K, N)
-        source_activity_mask: Shape (..., K, N)
-        affiliation_eps:
-    Returns:
-    """
     # Only check broadcast compatibility
     if source_activity_mask is None:
         _ = cp.broadcast_arrays(weight, log_pdf)
@@ -177,13 +106,6 @@ def is_broadcast_compatible(*shapes):
 def normalize_observation(observation):
     """
     Attention: swap D and T dim
-    The dimensions are swapped, because some calculations (e.g. covariance) do
-    a reduction over the sample (time) dimension. Having the time dimension on
-    the last axis improves the execution time.
-    Args:
-        observation: (..., T, D)
-    Returns:
-        normalized observation (..., D, T)
     """
     observation = _unit_norm(
         observation,
